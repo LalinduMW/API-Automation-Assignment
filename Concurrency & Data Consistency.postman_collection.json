@@ -1,0 +1,132 @@
+{
+	"info": {
+		"_postman_id": "043f3ad0-526f-4fd5-8fa3-b1372da0b85e",
+		"name": "Concurrency & Data Consistency",
+		"description": "Collection to send parallel POST requests and verify unique IDs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17183903",
+		"_collection_link": "https://warped-spaceship-535191.postman.co/workspace/ConnX~fb9abdcf-b479-4ace-b2d8-beaeb611e095/collection/17183903-043f3ad0-526f-4fd5-8fa3-b1372da0b85e?action=share&source=collection_link&creator=17183903"
+	},
+	"item": [
+		{
+			"name": "Create Post",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Define payloads",
+							"let payloads = [",
+							"    { title: 'Post 1', body: 'Content 1', userId: 1 },",
+							"    { title: 'Post 2', body: 'Content 2', userId: 2 },",
+							"    { title: 'Post 3', body: 'Content 3', userId: 3 }",
+							"];",
+							"",
+							"// Select payload based on iteration",
+							"pm.environment.set('currentPayload', JSON.stringify(payloads[pm.info.iteration]));"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let res = pm.response.json();",
+							"",
+							"if (!pm.collectionVariables.get('createdIds')) {",
+							"    pm.collectionVariables.set('createdIds', JSON.stringify([]));",
+							"}",
+							"",
+							"let createdIds = JSON.parse(pm.collectionVariables.get('createdIds'));",
+							"createdIds.push(res.id);",
+							"pm.collectionVariables.set('createdIds', JSON.stringify(createdIds));",
+							"",
+							"console.log('Created ID:', res.id);",
+							"",
+							"pm.test('Status is 201 Created', function() {",
+							"    pm.response.to.have.status(201);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{currentPayload}}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/posts",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"posts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Validate Unique IDs",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let ids = JSON.parse(pm.collectionVariables.get('createdIds'));",
+							"let uniqueIds = [...new Set(ids)];",
+							"",
+							"pm.test('All created posts have unique IDs', function() {",
+							"    pm.expect(uniqueIds.length).to.eql(ids.length);",
+							"});",
+							"",
+							"console.log('All created IDs:', ids);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/posts",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"posts"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "createdIds",
+			"value": ""
+		}
+	]
+}

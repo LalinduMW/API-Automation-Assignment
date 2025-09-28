@@ -1,0 +1,328 @@
+{
+	"info": {
+		"_postman_id": "7547657c-05b3-41ff-ba63-f7fbc30bb70e",
+		"name": "API Automation Assignment",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17183903",
+		"_collection_link": "https://warped-spaceship-535191.postman.co/workspace/ConnX~fb9abdcf-b479-4ace-b2d8-beaeb611e095/collection/17183903-7547657c-05b3-41ff-ba63-f7fbc30bb70e?action=share&source=collection_link&creator=17183903"
+	},
+	"item": [
+		{
+			"name": "Get All Posts with Schema Validation",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const schema = {\r",
+							"  type: \"array\",\r",
+							"  items: {\r",
+							"    type: \"object\",\r",
+							"    required: [\"userId\", \"id\", \"title\", \"body\"],\r",
+							"    properties: {\r",
+							"      userId: { type: \"number\" },\r",
+							"      id: { type: \"number\" },\r",
+							"      title: { type: \"string\" },\r",
+							"      body: { type: \"string\" }\r",
+							"    }\r",
+							"  }\r",
+							"};\r",
+							"\r",
+							"pm.test(\"Verify status code is 200\", () => {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"// Schema Validation\r",
+							"pm.test(\"Verify response matches schema\", () => {\r",
+							"    pm.response.to.have.jsonSchema(schema);\r",
+							"});\r",
+							"\r",
+							"// Positive Case: Response should be an array\r",
+							"pm.test(\"Verify response is an array\", () => {\r",
+							"    pm.expect(pm.response.json()).to.be.an(\"array\");\r",
+							"});\r",
+							"\r",
+							"// Negative Case: Array is empty\r",
+							"pm.test(\"Verify array is empty\", () => {\r",
+							"    pm.expect(pm.response.json().length).to.be.below(0);\r",
+							"});\r",
+							"\r",
+							"// Ensure response time < 500ms.\r",
+							"pm.test(\"Response time is less than 500ms\", function () {\r",
+							"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/posts",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"posts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Data-Driven Get Single Post",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Verify status code is 200\", () => {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"let jsonData = pm.response.json();\r",
+							"\r",
+							"// Positive Case: Check if the correct Id is returned\r",
+							"pm.test(\"Verify correct Id is returned\", () => {\r",
+							"    pm.expect(jsonData.id).to.eql(1);\r",
+							"});\r",
+							"\r",
+							"// Negative Case: Check if the correct title is returned\r",
+							"pm.test(\"Verify correct title is returned\", () => {\r",
+							"    pm.expect(jsonData.title).to.eql(\"sunt aut facere\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/posts/:Id",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"posts",
+						":Id"
+					],
+					"variable": [
+						{
+							"key": "Id",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Post (Chained Tests)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let jsonData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Verify status code is 201\", () => {\r",
+							"    pm.response.to.have.status(201);\r",
+							"});\r",
+							"\r",
+							"// Positive Case: Check if the post was created with the correct title and body\r",
+							"pm.test(\"Verify post created with correct title\", () => {\r",
+							"    pm.expect(jsonData.title).to.eql(\"test title\");\r",
+							"    pm.expect(jsonData.body).to.eql(\"test body\");\r",
+							"});\r",
+							"\r",
+							"// Save postId for next requests (chaining)\r",
+							"pm.environment.set(\"postId\", jsonData.id);\r",
+							"\r",
+							"// Negative Case: Verify created postId\r",
+							"pm.test(\"Verify created postId\", () => {\r",
+							"    pm.expect(jsonData.id).to.eql(102);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"title\": \"test title\",\r\n  \"body\": \"test body\",\r\n  \"userId\": 1\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/posts",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"posts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Post with Partial Data (PATCH)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Verify status code is 200\", () => {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"// Positive Case: Check if title updated got updated with the correct value\r",
+							"pm.test(\"Verify title updated got updated with the correct value\", () => {\r",
+							"    let jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.title).to.eql(\"patched title\");\r",
+							"});\r",
+							"\r",
+							"// Negative Case: Check if body updated got updated with the correct value\r",
+							"pm.test(\"Verify body updated got updated with the correct value\", () => {\r",
+							"    let jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.body).to.eql(\"invalid body\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"title\": \"patched title\",\r\n  \"body\": \"patched title\"\r\n\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/posts/:Id",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"posts",
+						":Id"
+					],
+					"variable": [
+						{
+							"key": "Id",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Post & Verify Non-Existence",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Verify status code is 200\", () => {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"//Positive Case: Verify Non-Existence\r",
+							"pm.test(\"Should return empty object after deletion\", () => {\r",
+							"    pm.expect(pm.response.json()).to.eql({});\r",
+							"});\r",
+							"\r",
+							"let jsonData = pm.response.json();\r",
+							"\r",
+							"//Negative Case: Verify the deleted object contains the title\r",
+							"pm.test(\"Verify the deleted object contains the title\", () => {\r",
+							"    pm.expect(jsonData).to.have.property(\"title\", \"test title\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/posts/:Id",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"posts",
+						":Id"
+					],
+					"variable": [
+						{
+							"key": "Id",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "",
+			"type": "default"
+		}
+	]
+}
